@@ -1,11 +1,8 @@
-from fastapi import FastAPI, Security, Depends, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
-from fastapi.security import APIKeyHeader
-import berserk
 import uvicorn
-import pgn_parser
-from auth import router as auth_route
-from pgn_routes import router as pgn_route
+from routes.auth import router as auth_route
+from routes.pgn_routes import router as pgn_route
 
 app = FastAPI(
     title="Chess api playground"
