@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+"""PGN related endpoints module."""
 from typing import Annotated
-from fastapi.security import APIKeyHeader
+
 import berserk
 import pgn_parser
+from database_models import User, update_lichess_token
+from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.security import APIKeyHeader
+
 from .auth import get_current_active_user
-from database_models import update_lichess_token, User
 
 router = APIRouter(dependencies=[Depends(get_current_active_user)])
 
@@ -18,7 +21,7 @@ def prepare_session(token: str) -> berserk.Client:
     return client
 
 @router.get("/import/Lichess/all")
-async def import_all_studies(username: str, user = Depends(get_current_active_user)):
+async def import_all_studies(username: str, user: Annotated[User, Depends(get_current_active_user)]):
     lichess_client = prepare_session(user.lichess_key)
     try: 
         pgns = lichess_client.studies.export_by_username(username)
@@ -28,7 +31,7 @@ async def import_all_studies(username: str, user = Depends(get_current_active_us
 
 
 @router.get("/import/Lichess/{study_id}")
-async def import_study(study_id: int, user = Depends(get_current_active_user)):
+async def import_study(study_id: int, user: Annotated[User, Depends(get_current_active_user)]):
     lichess_client = prepare_session(user.lichess_key)
     try:
         pgns = lichess_client.studies.export(study_id)

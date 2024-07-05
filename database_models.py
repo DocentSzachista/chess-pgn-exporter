@@ -1,9 +1,10 @@
-from pydantic import BaseModel
-from typing import List, Dict, Optional, Union
-import motor.motor_asyncio
+"""Database operations module."""
+from typing import Dict, List, Optional, Union
 from uuid import UUID, uuid4
+
+import motor.motor_asyncio
+from pydantic import BaseModel, Field
 from pydantic.functional_validators import BeforeValidator
-from pydantic import Field
 from typing_extensions import Annotated
 
 PyObjectId = Annotated[str, BeforeValidator(str)]

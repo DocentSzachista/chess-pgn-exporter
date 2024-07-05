@@ -1,13 +1,15 @@
+import configparser
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
-import configparser
+
 import jwt
-from fastapi import Depends, HTTPException, status, APIRouter, Response
+from database_models import (User, UserCreate, UserInDB, check_username,
+                             create_new_user, retrieve_user)
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
 from pydantic import BaseModel
-from database_models import User, UserInDB, UserCreate, create_new_user, check_username, retrieve_user
 
 config = configparser.ConfigParser()
 config.read_file(open("./.config"))

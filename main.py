@@ -1,6 +1,6 @@
+import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
-import uvicorn
 from routes.auth import router as auth_route
 from routes.pgn_routes import router as pgn_route
 
