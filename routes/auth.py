@@ -14,7 +14,7 @@ config.read_file(open("./.config"))
 
 SECRET_KEY = config.get("auth_config", "SECRET_KEY")
 ALGORITHM =  config.get("auth_config", "ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = config.get("auth_config", "ACCESS_TOKEN_EXPIRE_MINUTES")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(config.get("auth_config", "ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 router = APIRouter()
 
@@ -27,17 +27,6 @@ class TokenData(BaseModel):
     username: str | None = None
 
 
-# fake_users_db = {
-#     "johndoe": {
-#         "username": "johndoe",
-#         "full_name": "John Doe",
-#         "email": "johndoe@example.com",
-#         "hashed_password": "$2a$12$6UKXZaGJDWSlWhUeSeK5UO/HIhFAcNYbD1j/kbI5LkoCABqJ1reEm",
-#         "disabled": False,
-#     }
-# }
-
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -47,8 +36,8 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def authenticate_user(username: str, password: str):
-    user = retrieve_user(username)
+async def authenticate_user(username: str, password: str):
+    user = await retrieve_user(username)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -66,10 +55,6 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# def get_user(db, username: str):
-#     if username in db:
-#         user_dict = db[username]
-#         return UserInDB(**user_dict)
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(
@@ -88,7 +73,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     user = retrieve_user(username)
     if user is None:
         raise credentials_exception
-    return user
+    return await user
 
 
 async def get_current_active_user(
@@ -101,7 +86,7 @@ async def get_current_active_user(
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> Token:
-    user = authenticate_user(form_data.username, form_data.password)
+    user = await authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -124,10 +109,11 @@ async def read_users_me(
 
 @router.post("/users/register")
 async def register_new_user(user_create: UserCreate):
+    print("pies")
     if user_create.password != user_create.password_confirmed:
         raise HTTPException(409, {"message":"Password does not match."})
-    if check_username(user_create.username):
-        raise HTTPException(409, {"message": "User already exists"})
+    # if check_username(user_create.username):
+    #     raise HTTPException(409, {"message": "User already exists"})
     hashed_pwd = get_password_hash(user_create.password)
     template_for_db = UserInDB(
         username=user_create.username,
@@ -136,5 +122,5 @@ async def register_new_user(user_create: UserCreate):
     user = await create_new_user(template_for_db)
     print(user)
     
-    return Response(status_code=201, content="Account created succesfully")
+    return Response(status_code=201, content={"message": "Account created succesfully"})
     

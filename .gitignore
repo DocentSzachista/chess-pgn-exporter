@@ -1,5 +1,7 @@
 .config
-
+# For now comment these, so they wont mess up in repo 
+docker-compose.yaml 
+Dockerfile
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

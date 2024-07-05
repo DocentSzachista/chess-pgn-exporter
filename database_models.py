@@ -58,6 +58,7 @@ async def create_new_user(user: UserInDB):
 
 async def check_username(username: str):
     count = await pgn_collection.count_documents({"username": username})
+    print(count)
     if count != 0:
         return True
     else:
@@ -72,7 +73,16 @@ async def check_username(username: str):
 
 async def retrieve_user(username: str) -> UserInDB:
     user = await pgn_collection.find_one({"username": username}, {"_id": 0, "studies": 0, "standalone_games": 0})
+    print(user)
     return UserInDB(**user)
+
+async def update_lichess_token(user: User, token: str):
+    rows_edited = await pgn_collection.update_one({"username": user.username}, {"$set":{"lichess_key": token}})
+    if rows_edited.matched_count == 1:
+        return True
+    return False 
+
+
 
 async def add_new_study(study: Dict[str, PGNGamesCollection]):
     pass 
