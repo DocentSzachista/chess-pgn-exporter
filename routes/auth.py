@@ -111,11 +111,10 @@ async def read_users_me(
 
 @router.post("/users/register")
 async def register_new_user(user_create: UserCreate):
-    print("pies")
     if user_create.password != user_create.password_confirmed:
         raise HTTPException(409, {"message":"Password does not match."})
-    # if check_username(user_create.username):
-    #     raise HTTPException(409, {"message": "User already exists"})
+    if check_username(user_create.username):
+        raise HTTPException(409, {"message": "User already exists"})
     hashed_pwd = get_password_hash(user_create.password)
     template_for_db = UserInDB(
         username=user_create.username,
@@ -124,5 +123,5 @@ async def register_new_user(user_create: UserCreate):
     user = await create_new_user(template_for_db)
     print(user)
     
-    return Response(status_code=201, content={"message": "Account created succesfully"})
+    return Response(status_code=201, content="Account created succesfully")
     

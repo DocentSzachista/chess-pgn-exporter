@@ -6,6 +6,7 @@ import motor.motor_asyncio
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
+from pymongo import ReturnDocument
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
 
@@ -27,8 +28,8 @@ class PGNGamesCollection(BaseModel):
 class User(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     username: str
-    studies: Dict[str, PGNGamesCollection] | None = None
-    standalone_games: PGNGamesCollection | None = None
+    studies: Dict[str, List[PGNGame]] | None = {}
+    standalone_games: List[PGNGame] | None = []
     lichess_key: str | None = None
 
 class UserInDB(User):
@@ -50,6 +51,8 @@ database = client.pgns
 
 pgn_collection = database.get_collection("pgn_collection")
 
+filter_username_query = lambda username: {"username": username}
+
 
 async def create_new_user(user: UserInDB):
     await pgn_collection.insert_one(
@@ -58,8 +61,7 @@ async def create_new_user(user: UserInDB):
 
 
 async def check_username(username: str):
-    count = await pgn_collection.count_documents({"username": username})
-    print(count)
+    count = await pgn_collection.count_documents(filter_username_query(username))
     if count != 0:
         return True
     else:
@@ -73,27 +75,42 @@ async def check_username(username: str):
 
 
 async def retrieve_user(username: str) -> UserInDB:
-    user = await pgn_collection.find_one({"username": username}, {"_id": 0, "studies": 0, "standalone_games": 0})
-    print(user)
+    user = await pgn_collection.find_one(
+        filter_username_query(username), 
+        {"_id": 0, "studies": 0, "standalone_games": 0}
+    )
     return UserInDB(**user)
 
-async def update_lichess_token(user: User, token: str):
-    rows_edited = await pgn_collection.update_one({"username": user.username}, {"$set":{"lichess_key": token}})
+async def update_lichess_token(username: str, token: str):
+    rows_edited = await pgn_collection.update_one(filter_username_query(username), {"$set":{"lichess_key": token}})
     if rows_edited.matched_count == 1:
         return True
     return False 
 
 
+async def add_new_study(username: str, study_name: str, study_games: PGNGamesCollection):
+    return await pgn_collection.find_one_and_update(
+        filter_username_query(username), {"$set": {f"studies.{study_name}": study_games}}, 
+        return_document=ReturnDocument.AFTER 
+    )
 
-async def add_new_study(study: Dict[str, PGNGamesCollection]):
-    pass 
 
-async def add_game(game: PGNGame, study: str | None = None):
-    pass
+async def add_game(username: str, game: PGNGame, study: str | None = None):
+    if study:
+        return await pgn_collection.find_one_and_update(
+            filter_username_query(username), {"$push": {f"studies.{study}": game}}, 
+            return_document=ReturnDocument.AFTER 
+        )
+    return await pgn_collection.find_one_and_update(
+            filter_username_query(username), {"$push": {f"standalone_games": game.model_dump_json()}}, 
+            return_document=ReturnDocument.AFTER 
+        )
 
 
-async def remove_study(study: str):
-    pass 
+async def remove_study(username: str, study: str):
+    return await pgn_collection.find_one_and_update(
+        filter_username_query(username), {"$unset": {f"studies.{study}": 1}}, return_document=ReturnDocument.AFTER
+    )
 
 
 async def remove_game(study: str, index: int):
