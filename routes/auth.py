@@ -18,7 +18,9 @@ SECRET_KEY = config.get("auth_config", "SECRET_KEY")
 ALGORITHM =  config.get("auth_config", "ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(config.get("auth_config", "ACCESS_TOKEN_EXPIRE_MINUTES"))
 
-router = APIRouter()
+router = APIRouter(
+    tags=["auth"]
+)
 
 class Token(BaseModel):
     access_token: str

@@ -26,10 +26,10 @@ class ChessGame():
             raise AbsentHeaderException(f"There are missing headers: {str(missing_headers)}")
     
     def __convert_pgn(self, pgn_notation: str):
+        """Converts pgn to dict."""
         streaming_object = io.StringIO(pgn_notation)
         game = chess.pgn.read_game(streaming_object)
         self.__validate_pgn(game)
-        """Converts pgn to dict."""
         game_dict = {  
             header: game.headers.get(header, "") for header in self.required_headers
         }

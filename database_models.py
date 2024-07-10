@@ -41,9 +41,6 @@ class UserCreate(BaseModel):
     password_confirmed: str
 
 
-
-
-# MONGO_DETAILS = "mongodb://root:example@mongo:27017"
 MONGO_DETAILS = "mongodb://localhost:27017"
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DETAILS)
 
@@ -52,6 +49,17 @@ database = client.pgns
 pgn_collection = database.get_collection("pgn_collection")
 
 filter_username_query = lambda username: {"username": username}
+
+
+def validate_output_decorator(db_operation_func):
+    
+    def validator(*args, **kwargs):
+        row_edited = db_operation_func(*args, **kwargs)
+        if row_edited.matched_count == 1:
+            return True
+        return False
+    
+    return validator 
 
 
 async def create_new_user(user: UserInDB):
@@ -81,11 +89,9 @@ async def retrieve_user(username: str) -> UserInDB:
     )
     return UserInDB(**user)
 
+@validate_output_decorator
 async def update_lichess_token(username: str, token: str):
-    rows_edited = await pgn_collection.update_one(filter_username_query(username), {"$set":{"lichess_key": token}})
-    if rows_edited.matched_count == 1:
-        return True
-    return False 
+    return await pgn_collection.update_one(filter_username_query(username), {"$set":{"lichess_key": token}}) 
 
 
 async def add_new_study(username: str, study_name: str, study_games: PGNGamesCollection):
@@ -95,6 +101,7 @@ async def add_new_study(username: str, study_name: str, study_games: PGNGamesCol
     )
 
 
+@validate_output_decorator
 async def add_game(username: str, game: PGNGame, study: str | None = None):
     if study:
         return await pgn_collection.find_one_and_update(
@@ -107,15 +114,43 @@ async def add_game(username: str, game: PGNGame, study: str | None = None):
         )
 
 
+@validate_output_decorator
+async def update_game_moves(username: str, index: int, updated_data: PGNGame, study: str | None = None):
+    if study: 
+        return await pgn_collection.find_one_and_update(
+            filter_username_query(username), {"$set": {f"studies.{study}.{index}": updated_data.model_dump_json()}},
+            return_document=ReturnDocument.AFTER 
+        )
+    return await pgn_collection.find_one_and_update(
+            filter_username_query(username), {"$set": {f"standalone_games.{index}": updated_data.model_dump_json()}}, 
+            return_document=ReturnDocument.AFTER 
+        )
+    
+
+@validate_output_decorator
 async def remove_study(username: str, study: str):
     return await pgn_collection.find_one_and_update(
         filter_username_query(username), {"$unset": {f"studies.{study}": 1}}, return_document=ReturnDocument.AFTER
     )
 
 
-async def remove_game(study: str, index: int):
-    pass 
+@validate_output_decorator
+async def remove_game(username: str, index: int, study: str | None = None ):
+    if study: 
+        rows_edited = await pgn_collection.find_one_and_update(
+            filter_username_query(username), {"$unset": {f"studies.{study}.{index}": 1}},
+            return_document=ReturnDocument.AFTER 
+        )
+    else:
+        rows_edited = await pgn_collection.find_one_and_update(
+            filter_username_query(username), {"$unset": {f"standalone_games.{index}": 1}}, 
+            return_document=ReturnDocument.AFTER 
+        )
+    if rows_edited.matched_count == 1:
+        return True
+    return False
 
 
-async def update_game_in_study(study: str, index: int, game: PGNGame):
-    pass 
+
+
+

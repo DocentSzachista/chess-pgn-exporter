@@ -3,18 +3,18 @@ import logging
 from typing import Annotated
 
 import berserk
-import pgn_parser
-from database_models import User, add_new_study, update_lichess_token
+from database_models import User, add_new_study, update_lichess_token, PGNGame, update_game_moves
+from dependencies import parser
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile
 from pymongo.errors import OperationFailure
 
 from .auth import get_current_active_user
 
 router = APIRouter(
+    prefix="/lichess",
+    tags=["lichess"],
     dependencies=[Depends(get_current_active_user)]
 )
-
-parser = pgn_parser.ChessGame()
 
 
 def prepare_session(token: str) -> berserk.Client:
@@ -23,7 +23,7 @@ def prepare_session(token: str) -> berserk.Client:
     return client
 
 
-@router.get("/import/Lichess/all")
+@router.get("/import/all")
 async def import_all_studies(username: str, user: Annotated[User, Depends(get_current_active_user)]):
     lichess_client = prepare_session(user.lichess_key)
     try: 
@@ -40,7 +40,7 @@ async def import_all_studies(username: str, user: Annotated[User, Depends(get_cu
         raise HTTPException(403, "Provided key has not enough priviliges. Required priviliges: study:read")
 
 
-@router.get("/import/Lichess/{study_id}")
+@router.get("/import/{study_id}")
 async def import_study(study_id: int, user: Annotated[User, Depends(get_current_active_user)]):
     lichess_client = prepare_session(user.lichess_key)
     try:
@@ -52,13 +52,20 @@ async def import_study(study_id: int, user: Annotated[User, Depends(get_current_
         raise HTTPException(403, "Provided key has not enough priviliges. Required priviliges: study:read")
 
 
-@router.post("/import/file")
-async def import_pgn_file(file: UploadFile):
-    if file.content_type != "application/octet-stream":
-        raise HTTPException(422, "Invalid input type")
-    content = await file.read()
-    print(content)
-    return {"filename": file.content_type}
+
+@router.delete("/{study}")
+async def remove_study(study: str):
+    pass 
+
+
+@router.delete("/{game_name}")
+async def remove_game(game_name: str):
+    pass 
+
+
+@router.put("/update/metadata")
+async def update_game_data(game_data: PGNGame, index: int, user: Annotated[User, Depends(get_current_active_user)], study: str | None = None ):
+    is_updated = await  update_game_moves(user,  )
 
 
 @router.put("/updateToken")

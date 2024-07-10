@@ -2,14 +2,14 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from routes.auth import router as auth_route
-from routes.pgn_routes import router as pgn_route
-
+from routes.lichess import router as pgn_route
+from routes.base import router as base_route
 app = FastAPI(
     title="Chess api playground"
 )
 app.include_router(auth_route)
 app.include_router(pgn_route)
-
+app.include_router(base_route)
 
 @app.get("/isAlive")
 async def liveness_endpoint():
