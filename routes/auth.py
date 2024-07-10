@@ -12,7 +12,7 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 
 config = configparser.ConfigParser()
-config.read_file(open("./.config"))
+config.read_file(open("./.config", "r+"))
 
 SECRET_KEY = config.get("auth_config", "SECRET_KEY")
 ALGORITHM =  config.get("auth_config", "ALGORITHM")
@@ -122,8 +122,6 @@ async def register_new_user(user_create: UserCreate):
         username=user_create.username,
         hashed_password=hashed_pwd
     )
-    user = await create_new_user(template_for_db)
-    print(user)
-    
+    await create_new_user(template_for_db)
+
     return Response(status_code=201, content="Account created succesfully")
-    

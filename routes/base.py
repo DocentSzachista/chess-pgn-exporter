@@ -1,11 +1,12 @@
-from .auth import get_current_active_user
-from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile
 from dependencies import parser
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
+
+from .auth import get_current_active_user
 
 router = APIRouter(
-    tags=["base"]
-    # prefix="/",
-    # dependencies=[Depends(get_current_active_user)]
+    tags=["base"],
+    prefix="/",
+    dependencies=[Depends(get_current_active_user)]
 )
 
 
