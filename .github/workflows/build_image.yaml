@@ -26,10 +26,15 @@ jobs:
           echo "${ENV_CONTENT}" >> ./.env
           echo "ls -la ./"
 
-      - name: Build Docker image
-        run: docker build -t chess-pgn-exporter:latest .
-      - name: Push Docker image to Docker Hub
-        run: docker push chess-pgn-exporter:latest
+    - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       # - name: build and push docker image to registry
       #   uses: docker/build-push-action@v5
