@@ -5,7 +5,6 @@ from .auth import get_current_active_user
 
 router = APIRouter(
     tags=["base"],
-    prefix="/",
     dependencies=[Depends(get_current_active_user)]
 )
 

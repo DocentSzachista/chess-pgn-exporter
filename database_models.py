@@ -53,8 +53,8 @@ filter_username_query = lambda username: {"username": username}
 
 def validate_output_decorator(db_operation_func):
     
-    def validator(*args, **kwargs):
-        row_edited = db_operation_func(*args, **kwargs)
+    async def validator(*args, **kwargs):
+        row_edited = await db_operation_func(*args, **kwargs)
         if row_edited.matched_count == 1:
             return True
         return False
@@ -74,12 +74,6 @@ async def check_username(username: str):
         return True
     else:
         return False
-    # cursor = pgn_collection.find({}, {"_id": 0})
-    # documents = await cursor.to_list(10)
-    # documents = []
-    # for document in cursor:
-    #     documents.append(document)
-    # return documents
 
 
 async def retrieve_user(username: str) -> UserInDB:
@@ -89,6 +83,7 @@ async def retrieve_user(username: str) -> UserInDB:
     )
     return UserInDB(**user)
 
+
 @validate_output_decorator
 async def update_lichess_token(username: str, token: str):
     return await pgn_collection.update_one(filter_username_query(username), {"$set":{"lichess_key": token}}) 
@@ -97,60 +92,56 @@ async def update_lichess_token(username: str, token: str):
 async def add_new_study(username: str, study_name: str, study_games: PGNGamesCollection):
     return await pgn_collection.find_one_and_update(
         filter_username_query(username), {"$set": {f"studies.{study_name}": study_games}}, 
-        return_document=ReturnDocument.AFTER 
     )
 
 
 @validate_output_decorator
 async def add_game(username: str, game: PGNGame, study: str | None = None):
     if study:
-        return await pgn_collection.find_one_and_update(
+        return await pgn_collection.update_one(
             filter_username_query(username), {"$push": {f"studies.{study}": game}}, 
-            return_document=ReturnDocument.AFTER 
         )
-    return await pgn_collection.find_one_and_update(
+    return await pgn_collection.update_one(
             filter_username_query(username), {"$push": {f"standalone_games": game.model_dump_json()}}, 
-            return_document=ReturnDocument.AFTER 
         )
 
 
 @validate_output_decorator
 async def update_game_moves(username: str, index: int, updated_data: PGNGame, study: str | None = None):
     if study: 
-        return await pgn_collection.find_one_and_update(
+        return await pgn_collection.update_one(
             filter_username_query(username), {"$set": {f"studies.{study}.{index}": updated_data.model_dump_json()}},
-            return_document=ReturnDocument.AFTER 
         )
-    return await pgn_collection.find_one_and_update(
+    return await pgn_collection.update_one(
             filter_username_query(username), {"$set": {f"standalone_games.{index}": updated_data.model_dump_json()}}, 
-            return_document=ReturnDocument.AFTER 
         )
     
 
 @validate_output_decorator
 async def remove_study(username: str, study: str):
-    return await pgn_collection.find_one_and_update(
-        filter_username_query(username), {"$unset": {f"studies.{study}": 1}}, return_document=ReturnDocument.AFTER
+    return await pgn_collection.update_one(
+        filter_username_query(username), {"$unset": {f"studies.{study}": 1}}
     )
 
 
 @validate_output_decorator
 async def remove_game(username: str, index: int, study: str | None = None ):
     if study: 
-        rows_edited = await pgn_collection.find_one_and_update(
+        return await pgn_collection.update_one(
             filter_username_query(username), {"$unset": {f"studies.{study}.{index}": 1}},
-            return_document=ReturnDocument.AFTER 
         )
     else:
-        rows_edited = await pgn_collection.find_one_and_update(
+        return  await pgn_collection.update_one(
             filter_username_query(username), {"$unset": {f"standalone_games.{index}": 1}}, 
-            return_document=ReturnDocument.AFTER 
         )
-    if rows_edited.matched_count == 1:
-        return True
-    return False
 
 
+async def get_user_games(username: str, study: str | None = None):
+    if study: 
+        return await pgn_collection.find_one(filter_username_query(username),  {"_id": 0, f"studies.{study}": 1, })
+    return await pgn_collection.find_one(filter_username_query(username),  {"_id": 0, "standalone_games": 1, })
 
 
+async def get_user_studies(username: str):
+    return await pgn_collection.find_one(filter_username_query(username),  {"_id": 0, f"studies": 1, })
 

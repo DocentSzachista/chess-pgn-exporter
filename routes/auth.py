@@ -115,7 +115,7 @@ async def read_users_me(
 async def register_new_user(user_create: UserCreate):
     if user_create.password != user_create.password_confirmed:
         raise HTTPException(409, {"message":"Password does not match."})
-    if check_username(user_create.username):
+    if await check_username(user_create.username):
         raise HTTPException(409, {"message": "User already exists"})
     hashed_pwd = get_password_hash(user_create.password)
     template_for_db = UserInDB(

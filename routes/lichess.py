@@ -3,7 +3,7 @@ import logging
 from typing import Annotated
 
 import berserk
-from database_models import User, add_new_study, update_lichess_token, PGNGame, update_game_moves, remove_study, remove_game
+from database_models import User, add_new_study, update_lichess_token, PGNGame, update_game_moves, remove_study, remove_game, get_user_studies, get_user_games
 from dependencies import parser
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
 from pymongo.errors import OperationFailure
@@ -52,7 +52,6 @@ async def import_study(study_id: int, user: Annotated[User, Depends(get_current_
         return HTTPException(403, "Provided key has not enough priviliges. Required priviliges: study:read")
 
 
-
 @router.delete("/{study}")
 async def remove_user_study(study: str, user: Annotated[User, Depends(get_current_active_user)]):
     is_removed = await  remove_study(user.username, study)
@@ -95,3 +94,15 @@ async def update_token(token: str, user: Annotated[User, Depends(get_current_act
         user.lichess_key = token
         return Response(status_code=200)
     return HTTPException(400, "Something bad happened during update")
+
+
+@router.get("/games")
+async def retrieve_games(user: Annotated[User, Depends(get_current_active_user)], study: str  | None = None):
+    return await get_user_games(user.username, study)
+
+
+
+@router.get("/studies")
+async def retrieve_studies(user: Annotated[User, Depends(get_current_active_user)]):
+    studies =  await get_user_studies(user.username)
+    return list(studies['studies'].keys())
