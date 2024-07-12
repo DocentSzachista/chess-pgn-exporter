@@ -25,8 +25,8 @@ TBA
 ## TODOS
 |Część aplikacji| Czy zrobiona|
 |---|---|
-|Backend | [  ]
-|Baza danych | [ x ]
-|Dockerfile | [ ]
-|Automatyczne budowanie obrazu | [  ]
+|Backend | [x]
+|Baza danych | [x]
+|Dockerfile | [x]
+|Automatyczne budowanie obrazu | [x]
 |Front-end | [  ]
