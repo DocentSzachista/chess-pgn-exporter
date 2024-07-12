@@ -15,14 +15,18 @@ jobs:
       - name: Populate Dockerfile
         env:
           DOCKERFILE_CONTENT: ${{secrets.DOCKERFILE}}
-        run: echo "${DOCKERFILE_CONTENT}" > ./Dockerfile
+        run: |
+          touch Dockerfile
+          echo "${DOCKERFILE_CONTENT}" >> Dockerfile
       - name: Create .env file
         env:
           ENV_CONTENT: ${{secrets.ENVFILE}}
-        run: echo "${DOCKERFILE_CONTENT}" > ./env
+        run: |
+          touch .env 
+          echo "${ENV_CONTENT}" >> ./.env
       - name: build and push docker image to registry
         uses: docker/build-push-action@v5
         with:
-          context: ./Dockerfile
+          context: Dockerfile
           push: true
           tags: ${{secrets.DOCKERHUB_USERNAME}}/chess-pgn-exporter:latest
