@@ -24,6 +24,7 @@ jobs:
         run: |
           touch .env 
           echo "${ENV_CONTENT}" >> ./.env
+          ls -la ./
       - name: build and push docker image to registry
         uses: docker/build-push-action@v5
         with:
