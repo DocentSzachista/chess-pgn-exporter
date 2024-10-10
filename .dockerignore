@@ -1,0 +1,4 @@
+.gitignore/
+.github/
+*.md
+__pycache__/
