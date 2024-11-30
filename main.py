@@ -1,5 +1,5 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from routes.auth import router as auth_route
 from routes.lichess import router as pgn_route
@@ -29,15 +29,11 @@ async def liveness_endpoint():
 async def readiness_endpoint():
     try:
         LOGGER.info("Check if database is set up")
-        client.admin.command("ping")
-        return {
-            "message": "I am ready to work"
-        }
+        info = await client.admin.command("ping")
+        return info
     except ConnectionFailure:
         LOGGER.error("Cant connect to the database")
-        return {
-            "message": "Cant connect to the database"
-        }
+        raise HTTPException(status_code=503, detail="Cant connect to the database")
 
 
 @app.get("/")
