@@ -12,7 +12,7 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 
 config = configparser.ConfigParser()
-config.read_file(open("./.config", "r+"))
+config.read_file(open("./.config", "r"))
 
 SECRET_KEY = config.get("auth_config", "SECRET_KEY")
 ALGORITHM =  config.get("auth_config", "ALGORITHM")

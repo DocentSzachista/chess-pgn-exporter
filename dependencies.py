@@ -9,7 +9,7 @@ parser = pgn_parser.ChessGame()
 
 def set_logging():
     level = os.environ.get("LOGGING", "INFO")
-    handler = logging.FileHandler('myapp.log')
+    handler = logging.FileHandler('./logs/myapp.log')
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger = logging.getLogger(__name__)
