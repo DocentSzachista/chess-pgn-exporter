@@ -1,9 +1,6 @@
 name: Lint Python code using flake8
 
-on:
-  push:
-    paths:
-      - '*.py'
+on: push
 
 jobs:
   flake8_py3:
