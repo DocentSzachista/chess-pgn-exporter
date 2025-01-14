@@ -1,5 +1,8 @@
 name: Build and Push Docker Image to Docker Hub
-on: push
+on:
+  push:
+    branches:
+      - master
 jobs:
   push_to_registry:
     name: push docker image to hub
@@ -27,7 +30,7 @@ jobs:
         env:
           ENV_CONTENT: ${{secrets.ENVFILE}}
         run: |
-          touch .env 
+          touch .env
           echo "${ENV_CONTENT}" >> ./.env
           echo "ls -la ./"
 
