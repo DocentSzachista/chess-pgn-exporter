@@ -15,6 +15,7 @@ app.include_router(auth_route)
 app.include_router(pgn_route)
 app.include_router(base_route)
 
+
 @app.get("/isAlive")
 async def liveness_endpoint():
     LOGGER.info("Check if API is alive")
